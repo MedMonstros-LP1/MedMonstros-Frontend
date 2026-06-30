@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '../context/AuthContext'
 import { consultaApi } from '../services/api'
 
@@ -162,7 +163,7 @@ export default function MedicoDashboard() {
         </div>
       </div>
 
-      {consultaTratamento && (
+      {consultaTratamento && createPortal(
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
           <div className="bg-slate-800 p-6 rounded-lg w-full max-w-md shadow-2xl border border-slate-600">
             <h2 className="text-xl font-bold text-white mb-1">Registrar Tratamento</h2>
@@ -256,7 +257,8 @@ export default function MedicoDashboard() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
