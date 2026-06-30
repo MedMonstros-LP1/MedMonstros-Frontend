@@ -12,6 +12,16 @@ const navegacao = [
       </svg>
     ),
   },
+  {
+    para: '/agenda',
+    rotulo: 'Agenda',
+    icone: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    ),
+    apenasMedico: true,
+  },
 ]
 
 function Avatar({ nome }) {
@@ -49,7 +59,9 @@ export default function Layout() {
             <span className="text-sm font-bold tracking-tight text-white">MedMonstros</span>
           </Link>
 
-          {navegacao.map((item) => {
+          {navegacao
+            .filter((item) => !item.apenasMedico || perfil?.tipo === 'MEDICO')
+            .map((item) => {
             const ativo = location.pathname === item.para
             return (
               <Link
