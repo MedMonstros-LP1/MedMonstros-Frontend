@@ -6,7 +6,8 @@ export default function MedicoDashboard() {
   const { perfil } = useAuth()
   const [consultas, setConsultas] = useState([])
   const [consultaTratamento, setConsultaTratamento] = useState(null)
-  
+  const [erro, setErro] = useState('')
+
   const [tratamentoForm, setTratamentoForm] = useState({
     tipo: 'MAGICO',
     descricao: '',
@@ -25,7 +26,7 @@ export default function MedicoDashboard() {
       const data = await consultaApi.getConsultasMedico(perfil.id)
       setConsultas(data)
     } catch (error) {
-      console.error(error)
+      setErro(error.response?.data?.message || 'Erro ao carregar consultas.')
     }
   }
 
@@ -35,28 +36,50 @@ export default function MedicoDashboard() {
       setConsultaTratamento(consulta)
       return
     }
-    
+
+    setErro('')
     try {
-      const atualizada = await consultaApi.atualizarStatus(id, acao)
+      await consultaApi.atualizarStatus(id, acao)
+      const atualizada = await consultaApi.getConsulta(id)
       setConsultas(consultas.map(c => c.id === id ? atualizada : c))
     } catch (error) {
-      console.error(error)
+      setErro(error.response?.data?.message || 'Erro ao atualizar status da consulta.')
     }
   }
 
   const submeterTratamento = async (e) => {
     e.preventDefault()
     if (!consultaTratamento) return
-    
+
+    setErro('')
     try {
-      const consultaAtualizada = await consultaApi.registrarTratamento(consultaTratamento.id, tratamentoForm)
-      await consultaApi.atualizarStatus(consultaAtualizada.id, 'realizar')
-      
-      const atualizadaRealizada = { ...consultaAtualizada, status: 'REALIZADA' }
-      setConsultas(consultas.map(c => c.id === consultaAtualizada.id ? atualizadaRealizada : c))
+      await consultaApi.atualizarStatus(consultaTratamento.id, 'realizar')
+
+      const payload = {
+        tipo: tratamentoForm.tipo,
+        descricao: tratamentoForm.descricao || 'Tratamento clínico padrão',
+        valorBase: Number(tratamentoForm.valorBase) || 100.0,
+      }
+      if (tratamentoForm.tipo === 'MAGICO') {
+        payload.nivelEncantamento = Number(tratamentoForm.nivelEncantamento) || 1
+      } else {
+        payload.requerExorcismo = Boolean(tratamentoForm.requerExorcismo)
+      }
+
+      await consultaApi.registrarTratamento(consultaTratamento.id, payload)
+
+      const atualizada = await consultaApi.getConsulta(consultaTratamento.id)
+      setConsultas(consultas.map(c => c.id === atualizada.id ? atualizada : c))
       setConsultaTratamento(null)
+      setTratamentoForm({
+        tipo: 'MAGICO',
+        descricao: '',
+        valorBase: 100,
+        nivelEncantamento: 1,
+        requerExorcismo: false
+      })
     } catch (error) {
-      console.error(error)
+      setErro(error.response?.data?.message || 'Erro ao registrar tratamento.')
     }
   }
 
@@ -74,7 +97,7 @@ export default function MedicoDashboard() {
       {c.tratamento && (
         <div className="text-sm text-emerald-300 bg-emerald-900/30 p-2 rounded">
           <p>Tratamento registrado ({c.tratamento.tipo})</p>
-          <p className="font-bold">Custo: R$ {c.tratamento.custo.toFixed(2)}</p>
+          <p className="font-bold">Custo: R$ {c.tratamento.custo?.toFixed(2)}</p>
         </div>
       )}
       {actions && <div className="flex gap-2">{actions(c)}</div>}
@@ -83,6 +106,15 @@ export default function MedicoDashboard() {
 
   return (
     <div className="space-y-8 relative">
+      {erro && (
+        <div className="p-3 bg-red-900/50 border border-red-500 rounded text-red-200 text-sm flex items-start gap-2">
+          <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{erro}</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-slate-800 p-5 rounded-lg shadow-lg border-t-4 border-yellow-500">
           <h3 className="font-bold text-white mb-4 text-lg">Pendentes (Solicitadas)</h3>
@@ -129,7 +161,7 @@ export default function MedicoDashboard() {
               <div>
                 <label className="block text-sm text-slate-300 mb-1">Tipo de Tratamento</label>
                 <select
-                  className="w-full bg-slate-700 text-white rounded p-2"
+                  className="w-full bg-slate-700 text-white rounded p-2 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-600"
                   value={tratamentoForm.tipo}
                   onChange={e => setTratamentoForm({...tratamentoForm, tipo: e.target.value})}
                 >
@@ -141,7 +173,7 @@ export default function MedicoDashboard() {
               <div>
                 <label className="block text-sm text-slate-300 mb-1">Descrição</label>
                 <textarea
-                  className="w-full bg-slate-700 text-white rounded p-2"
+                  className="w-full bg-slate-700 text-white rounded p-2 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-600"
                   rows="2"
                   value={tratamentoForm.descricao}
                   onChange={e => setTratamentoForm({...tratamentoForm, descricao: e.target.value})}
@@ -153,7 +185,7 @@ export default function MedicoDashboard() {
                 <label className="block text-sm text-slate-300 mb-1">Valor Base (R$)</label>
                 <input
                   type="number"
-                  className="w-full bg-slate-700 text-white rounded p-2"
+                  className="w-full bg-slate-700 text-white rounded p-2 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-600"
                   value={tratamentoForm.valorBase}
                   onChange={e => setTratamentoForm({...tratamentoForm, valorBase: parseFloat(e.target.value)})}
                   required
@@ -166,7 +198,7 @@ export default function MedicoDashboard() {
                   <label className="block text-sm text-slate-300 mb-1">Nível de Encantamento</label>
                   <input
                     type="number"
-                    className="w-full bg-slate-700 text-white rounded p-2"
+                    className="w-full bg-slate-700 text-white rounded p-2 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-600"
                     value={tratamentoForm.nivelEncantamento}
                     onChange={e => setTratamentoForm({...tratamentoForm, nivelEncantamento: parseInt(e.target.value)})}
                     required
@@ -191,7 +223,7 @@ export default function MedicoDashboard() {
                 <button
                   type="button"
                   onClick={() => setConsultaTratamento(null)}
-                  className="flex-1 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition-colors"
+                  className="flex-1 py-2 bg-slate-600 text-slate-100 rounded hover:bg-slate-500 transition-colors"
                 >
                   Cancelar
                 </button>

@@ -10,6 +10,7 @@ export default function PacienteDashboard() {
   const [horarioSelecionado, setHorarioSelecionado] = useState('')
   const [consultas, setConsultas] = useState([])
   const [erroFantasma, setErroFantasma] = useState('')
+  const [erro, setErro] = useState('')
 
   useEffect(() => {
     carregarDados()
@@ -24,7 +25,7 @@ export default function PacienteDashboard() {
         setConsultas(consultasData)
       }
     } catch (error) {
-      console.error(error)
+      setErro(error.response?.data?.message || 'Erro ao carregar dados.')
     }
   }
 
@@ -34,6 +35,7 @@ export default function PacienteDashboard() {
     setMedicoSelecionado(medico)
     setHorarioSelecionado('')
     setErroFantasma('')
+    setErro('')
     setHorarios([])
 
     if (!medico) return
@@ -50,12 +52,13 @@ export default function PacienteDashboard() {
       const horariosData = await consultaApi.getHorariosMedico(medico.id)
       setHorarios(horariosData)
     } catch (error) {
-      console.error(error)
+      setErro(error.response?.data?.message || 'Erro ao buscar horários.')
     }
   }
 
   const agendar = async () => {
     if (!medicoSelecionado || !horarioSelecionado) return
+    setErro('')
     try {
       const novaConsulta = await consultaApi.agendarConsulta({
         pacienteId: perfil.id,
@@ -67,16 +70,18 @@ export default function PacienteDashboard() {
       setHorarioSelecionado('')
       setHorarios([])
     } catch (error) {
-      console.error(error)
+      setErro(error.response?.data?.message || 'Erro ao agendar consulta.')
     }
   }
 
   const cancelarConsulta = async (id) => {
+    setErro('')
     try {
-      const atualizada = await consultaApi.atualizarStatus(id, 'cancelar')
+      await consultaApi.atualizarStatus(id, 'cancelar')
+      const atualizada = await consultaApi.getConsulta(id)
       setConsultas(consultas.map(c => c.id === id ? atualizada : c))
     } catch (error) {
-      console.error(error)
+      setErro(error.response?.data?.message || 'Erro ao cancelar consulta.')
     }
   }
 
@@ -84,6 +89,16 @@ export default function PacienteDashboard() {
     <div className="space-y-8">
       <div className="bg-slate-800 p-6 rounded-lg shadow-lg">
         <h2 className="text-xl font-bold text-white mb-4">Agendar Nova Consulta</h2>
+
+        {erro && (
+          <div className="mb-4 p-3 bg-red-900/50 border border-red-500 rounded text-red-200 text-sm flex items-start gap-2">
+            <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{erro}</span>
+          </div>
+        )}
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Selecione o Médico</label>
@@ -148,7 +163,7 @@ export default function PacienteDashboard() {
                   {c.tratamento && (
                     <div className="mt-2 text-sm text-purple-300 bg-purple-900/30 p-2 rounded">
                       <p>Tratamento: {c.tratamento.tipo}</p>
-                      <p>Custo: R$ {c.tratamento.custo.toFixed(2)}</p>
+                      <p>Custo: R$ {c.tratamento.custo?.toFixed(2)}</p>
                     </div>
                   )}
                 </div>
