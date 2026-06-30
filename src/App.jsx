@@ -6,6 +6,7 @@ import RegistrarMedico from './pages/RegistrarMedico'
 import RegistrarPaciente from './pages/RegistrarPaciente'
 import Home from './pages/Home'
 import PerfilMedico from './pages/PerfilMedico'
+import AgendaMedico from './pages/AgendaMedico'
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
       >  
         <Route path="/" element={<Home />} />
         <Route path="/perfil" element={<PerfilMedico />} />
+        <Route path="/agenda" element={<AgendaMedico />} />
       </Route>
     </Routes>
   )
