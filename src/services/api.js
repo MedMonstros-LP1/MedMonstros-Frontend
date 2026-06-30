@@ -50,6 +50,10 @@ export const medicoApi = {
   removeEspecialidade: (medicoId, espId) => api.delete(`/medicos/${medicoId}/especialidades/${espId}`).then((r) => r.data),
 }
 
+export const pacienteApi = {
+  getPerfil: (id) => api.get(`/pacientes/${id}`).then((r) => r.data),
+}
+
 export const horarioApi = {
   listarTodos: (medicoId) => api.get(`/horarios/medico/${medicoId}/todos`).then((r) => r.data),
   criar: (dados) => api.post('/horarios', dados).then((r) => r.data),
