@@ -67,17 +67,18 @@ export default function Layout() {
             )
           })}
 
+
           <div className="ml-auto flex items-center gap-3">
             {perfil?.tipo && (
               <Badge variant="purple" className="hidden sm:inline-flex">{perfil.tipo}</Badge>
             )}
 
-            <div className="flex items-center gap-2">
+            <Link to="/perfil" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <Avatar nome={perfil?.nome} />
               <span className="hidden md:block text-sm font-medium text-slate-300 max-w-[160px] truncate">
                 {perfil?.nome}
               </span>
-            </div>
+            </Link>
 
             <div className="h-5 w-px bg-[#1e1c3a]" />
 

@@ -9,3 +9,10 @@ export const authApi = {
   registrarPaciente: (dados) => api.post('/auth/registrar-paciente', dados).then((r) => r.data),
   login: (credenciais) => api.post('/auth/login', credenciais).then((r) => r.data),
 }
+
+export const medicoApi = {
+  getPerfil: (id) => api.get(`/medicos/${id}`).then((r) => r.data),
+  getEspecialidades: () => api.get('/especialidades').then((r) => r.data),
+  addEspecialidade: (medicoId, espId) => api.post(`/medicos/${medicoId}/especialidades/${espId}`).then((r) => r.data),
+  removeEspecialidade: (medicoId, espId) => api.delete(`/medicos/${medicoId}/especialidades/${espId}`).then((r) => r.data),
+}
