@@ -43,3 +43,15 @@ export const consultaApi = {
     return api.post(`/consultas/${id}/tratamento`, dados).then(r => r.data);
   },
 };
+export const medicoApi = {
+  getPerfil: (id) => api.get(`/medicos/${id}`).then((r) => r.data),
+  getEspecialidades: () => api.get('/especialidades').then((r) => r.data),
+  addEspecialidade: (medicoId, espId) => api.post(`/medicos/${medicoId}/especialidades/${espId}`).then((r) => r.data),
+  removeEspecialidade: (medicoId, espId) => api.delete(`/medicos/${medicoId}/especialidades/${espId}`).then((r) => r.data),
+}
+
+export const horarioApi = {
+  listarTodos: (medicoId) => api.get(`/horarios/medico/${medicoId}/todos`).then((r) => r.data),
+  criar: (dados) => api.post('/horarios', dados).then((r) => r.data),
+  deletar: (id) => api.delete(`/horarios/${id}`).then((r) => r.data),
+}
