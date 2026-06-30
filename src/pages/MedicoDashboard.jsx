@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '../context/AuthContext'
 import { consultaApi } from '../services/api'
 
@@ -26,7 +27,7 @@ export default function MedicoDashboard() {
       const data = await consultaApi.getConsultasMedico(perfil.id)
       setConsultas(data)
     } catch (error) {
-      setErro(error.response?.data?.message || 'Erro ao carregar consultas.')
+      setErro(error.response?.data?.mensagem || 'Erro ao carregar consultas.')
     }
   }
 
@@ -43,7 +44,7 @@ export default function MedicoDashboard() {
       const atualizada = await consultaApi.getConsulta(id)
       setConsultas(consultas.map(c => c.id === id ? atualizada : c))
     } catch (error) {
-      setErro(error.response?.data?.message || 'Erro ao atualizar status da consulta.')
+      setErro(error.response?.data?.mensagem || 'Erro ao atualizar status da consulta.')
     }
   }
 
@@ -79,9 +80,17 @@ export default function MedicoDashboard() {
         requerExorcismo: false
       })
     } catch (error) {
-      setErro(error.response?.data?.message || 'Erro ao registrar tratamento.')
+      setErro(error.response?.data?.mensagem || 'Erro ao registrar tratamento.')
     }
   }
+
+  const custoEstimado = useMemo(() => {
+    const base = Number(tratamentoForm.valorBase) || 0
+    if (tratamentoForm.tipo === 'MAGICO') {
+      return base * (1 + (Number(tratamentoForm.nivelEncantamento) || 1) * 0.15)
+    }
+    return base + (tratamentoForm.requerExorcismo ? 500 : 0)
+  }, [tratamentoForm])
 
   const pendentes = consultas.filter(c => c.status === 'SOLICITADA')
   const emAndamento = consultas.filter(c => c.status === 'ACEITA')
@@ -91,6 +100,9 @@ export default function MedicoDashboard() {
     <div key={c.id} className="p-4 bg-slate-700 rounded-lg flex flex-col gap-3">
       <div>
         <p className="text-white font-medium">Paciente: {c.paciente?.nome}</p>
+        {c.paciente?.especie && (
+          <p className="text-xs text-slate-400">Espécie: {c.paciente.especie}</p>
+        )}
         <p className="text-sm text-slate-300">Data: {new Date(c.horario?.inicio).toLocaleString()}</p>
         <p className="text-sm text-slate-400">Status: <span className="font-semibold text-purple-400">{c.status}</span></p>
       </div>
@@ -151,12 +163,17 @@ export default function MedicoDashboard() {
         </div>
       </div>
 
-      {consultaTratamento && (
+      {consultaTratamento && createPortal(
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
           <div className="bg-slate-800 p-6 rounded-lg w-full max-w-md shadow-2xl border border-slate-600">
-            <h2 className="text-xl font-bold text-white mb-4">Registrar Tratamento</h2>
-            <p className="text-sm text-slate-300 mb-4">Paciente: {consultaTratamento.paciente?.nome}</p>
-            
+            <h2 className="text-xl font-bold text-white mb-1">Registrar Tratamento</h2>
+            <p className="text-sm text-slate-300 mb-4">
+              Paciente: {consultaTratamento.paciente?.nome}
+              {consultaTratamento.paciente?.especie && (
+                <span className="ml-2 text-slate-400">({consultaTratamento.paciente.especie})</span>
+              )}
+            </p>
+
             <form onSubmit={submeterTratamento} className="space-y-4">
               <div>
                 <label className="block text-sm text-slate-300 mb-1">Tipo de Tratamento</label>
@@ -195,7 +212,7 @@ export default function MedicoDashboard() {
 
               {tratamentoForm.tipo === 'MAGICO' ? (
                 <div>
-                  <label className="block text-sm text-slate-300 mb-1">Nível de Encantamento</label>
+                  <label className="block text-sm text-slate-300 mb-1">Nível de Encantamento (1–10)</label>
                   <input
                     type="number"
                     className="w-full bg-slate-700 text-white rounded p-2 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-600"
@@ -215,9 +232,13 @@ export default function MedicoDashboard() {
                     onChange={e => setTratamentoForm({...tratamentoForm, requerExorcismo: e.target.checked})}
                     className="rounded bg-slate-700 border-slate-600 text-purple-600 focus:ring-purple-500"
                   />
-                  <label htmlFor="exorcismo" className="text-sm text-slate-300">Requer Exorcismo?</label>
+                  <label htmlFor="exorcismo" className="text-sm text-slate-300">Requer Exorcismo? (+R$ 500,00)</label>
                 </div>
               )}
+
+              <div className="p-3 bg-purple-900/30 border border-purple-700/50 rounded text-sm text-purple-200">
+                Custo estimado: <strong>R$ {custoEstimado.toFixed(2)}</strong>
+              </div>
 
               <div className="flex gap-3 mt-6">
                 <button
@@ -236,7 +257,8 @@ export default function MedicoDashboard() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
