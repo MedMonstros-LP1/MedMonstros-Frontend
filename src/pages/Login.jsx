@@ -98,6 +98,12 @@ export default function Login() {
           Registrar conta
         </Link>
       </p>
+      <p className="mt-2 text-center text-sm text-slate-500">
+        É paciente?{' '}
+        <Link to="/registrar-paciente" className="font-semibold text-violet-400 hover:text-violet-300 transition-colors">
+          Criar conta de paciente
+        </Link>
+      </p>
     </AuthLayout>
   )
 }
